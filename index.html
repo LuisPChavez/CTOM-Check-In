@@ -14,15 +14,13 @@
         flex-direction: row;
     }
 
-    #containerForCameraAndText {
+    .containerForCameraAndText {
+        flex-direction: row;
+        justify-content: space-around;
+        flex-wrap: wrap;
         display: flex;      
-        flex-direction: column;
     }
 
-    #text {
-        font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
-        font-size: 20;
-    }
 
 </style>
 
@@ -37,9 +35,12 @@
     </div>
     <div class="containerForCameraAndText">
 
-            <video id="video" width="640" height="480" autoplay></video>
-            <canvas id="canvas" width="640" height="480"></canvas>
-            <h1>Hello name placeholder</h1>
+        <video id="video" width="640" height="480" autoplay></video>
+        <div>
+            <img src="./src/CheckIn.png" style="height: 400px; width: 400px">
+            <h1 id="GuestName"></h1>
+        </div>
+        <canvas id="canvas" width="640" height="480"></canvas>
 
     </div>
   </body>
@@ -154,7 +155,7 @@
         request.send(JSON.stringify(body));
     }
 
-    //enrollPeople();
+    enrollPeople();
 
     function takePicture() {
         canvas = document.getElementById('canvas');
@@ -186,9 +187,16 @@
 
             info = JSON.parse(this.responseText);
             if("Errors" in info || info.images[0].transaction.status == "failure") {
+                var nameOfGuest = info.images[0].transaction.subject_id;
+                var element = document.getElementById("GuestName");
+                element.innerHTML = "";
                 console.log("NO MATCH");
             }
             else {
+                var nameOfGuest = info.images[0].transaction.subject_id;
+                var element = document.getElementById("GuestName");
+                element.innerHTML = "Welcome " + nameOfGuest + "!";
+                console.log(nameOfGuest);
                 console.log("MATCH");
             }
           }
@@ -202,7 +210,7 @@
         request.send(JSON.stringify(body));
     }
     
-    //setInterval(takePicture, 4000);
+    setInterval(takePicture, 4000);
 
     
 
