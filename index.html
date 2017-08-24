@@ -11,13 +11,17 @@
     .container {
         display: flex;
         justify-content: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
+        flex-direction: row;
     }
 
-    .camera {
-        align-self: center;
-        position: relative;
+    #containerForCameraAndText {
+        display: flex;      
+        flex-direction: column;
+    }
+
+    #text {
+        font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+        font-size: 20;
     }
 
 </style>
@@ -28,18 +32,17 @@
     <title>CTO Mixers Check In!</title>
   </head>
   <body>
-        <div class="container">
-            <div>
-                <img src="./src/ctoMixers.jpg" alt="CTO Mixers Pic" style="height: 300px; width: 600px">
-            </div>
-            <div class="camera">
-                <video id="video" width="640" height="480" autoplay></video>
-                <img src="./src/ctoMixersCups.png" alt="Cups" style="height: 480px; width: 640px">
-                <canvas id="canvas" width="640" height="480"></canvas>
-            </div> 
-        </div>
-  </body>
+    <div class="container"x>
+        <img src="./src/ctoMixers.jpg" alt="CTO Mixers Pic" style="height: 300px; width: 600px">
+    </div>
+    <div class="containerForCameraAndText">
 
+            <video id="video" width="640" height="480" autoplay></video>
+            <canvas id="canvas" width="640" height="480"></canvas>
+            <h1>Hello name placeholder</h1>
+
+    </div>
+  </body>
 </html>
 
 <script>
@@ -60,9 +63,67 @@
     var canvas = document.getElementById('canvas');
     var context = canvas.getContext('2d');
     var video = document.getElementById('video');
+/*
+    var request = new XMLHttpRequest();
+        request.open('POST', 'https://api.kairos.com/gallery/remove_subject');
 
+        request.setRequestHeader('Content-Type', 'application/json');
+        request.setRequestHeader('app_id', '87fbd2da');
+        request.setRequestHeader('app_key', '88d1dfeed8460e409e85e9d429873b22');
+
+        request.onreadystatechange = function () {
+            if (this.readyState === 4) {
+                console.log('Status:', this.status);
+                console.log('Headers:', this.getAllResponseHeaders());
+                console.log('Body:', this.responseText);
+            }
+        };
+
+
+    var body = {
+        'gallery_name': 'TheGallery',
+        'subject_id': 'Luis-Chavez'
+    };
+
+    request.send(JSON.stringify(body));
+
+*/
+
+    var base64Pic;
     //console.log(video);
+    function viewList() {
+        var request = new XMLHttpRequest();
+        request.open('POST', 'https://api.kairos.com/gallery/view');
+
+        request.setRequestHeader('Content-Type', 'application/json');
+        request.setRequestHeader('app_id', '87fbd2da');
+        request.setRequestHeader('app_key', '88d1dfeed8460e409e85e9d429873b22');
+
+        request.onreadystatechange = function () {
+            if (this.readyState === 4) {
+                console.log('Status:', this.status);
+                console.log('Headers:', this.getAllResponseHeaders());
+                console.log('Body:', this.responseText);
+            }
+        };
+    
+
+        var body = {
+            'gallery_name': 'TheGallery'
+        };
+
+        request.send(JSON.stringify(body));
+    }
+
+    viewList();
+
     function enrollPeople() {
+        const nativeImage = require('electron').nativeImage
+
+        let image = nativeImage.createFromPath('./Guests/default.png');
+        //console.log(image);
+        var base64Pic = image.toDataURL();
+
         var request = new XMLHttpRequest();
 
         request.open('POST', 'https://api.kairos.com/enroll');
@@ -80,20 +141,24 @@
         };
 
 
+        
+
         var body = {
-            'image': "./Guests/default.png",
+            'image': base64Pic,
             'subject_id': 'Luis-Chavez',
-            'gallery_name': 'TheGallery'
+            'gallery_name': 'TheGallery',
         };
+
+
 
         request.send(JSON.stringify(body));
     }
 
-    enrollPeople();
+    //enrollPeople();
 
     function takePicture() {
         canvas = document.getElementById('canvas');
-        //canvas.style.visibility = "hidden";
+        canvas.style.visibility = "hidden";
         context = canvas.getContext('2d');
         video = document.getElementById('video');
         var info;
@@ -101,7 +166,9 @@
         console.log(video.src);
         console.log("Picture taken");
         context.drawImage(video, 0, 0, 640, 480);
-        var base64Str = canvas.toDataURL();
+        var base64Str3 = canvas.toDataURL();
+
+        
 
         var request = new XMLHttpRequest();
         
@@ -118,26 +185,24 @@
             console.log('Body:', this.responseText);
 
             info = JSON.parse(this.responseText);
-            //console.log(info);
-            if("Errors" in info) {
-                console.log("NO FACE SHOWN");
+            if("Errors" in info || info.images[0].transaction.status == "failure") {
+                console.log("NO MATCH");
             }
             else {
-                console.log("FACE SHOWN");
-
+                console.log("MATCH");
             }
           }
         };
 
         var body = {
-          'image': base64Str,
+          'image': base64Str3,
           'gallery_name' : 'TheGallery'
         };
         
         request.send(JSON.stringify(body));
     }
     
-    setInterval(takePicture, 5000);
+    //setInterval(takePicture, 4000);
 
     
 
