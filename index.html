@@ -15,6 +15,7 @@
     }
 
     .containerForCameraAndText {
+        justify-content: center;
         flex-direction: row;
         justify-content: space-around;
         flex-wrap: wrap;
@@ -37,8 +38,8 @@
 
         <video id="video" width="640" height="480" autoplay></video>
         <div>
-            <img src="./src/CheckIn.png" style="height: 400px; width: 400px">
-            <h1 id="GuestName"></h1>
+            <img id="CheckMark" src="./src/CheckInEmpty.png" style="height: 400px; width: 400px">
+            <h1 id="GuestName" >Don't see anyone yet!</h1>
         </div>
         <canvas id="canvas" width="640" height="480"></canvas>
 
@@ -121,7 +122,7 @@
     function enrollPeople() {
         const nativeImage = require('electron').nativeImage
 
-        let image = nativeImage.createFromPath('./Guests/default.png');
+        let image = nativeImage.createFromPath('./Guests/Robert-Cuadra.png');
         //console.log(image);
         var base64Pic = image.toDataURL();
 
@@ -146,7 +147,7 @@
 
         var body = {
             'image': base64Pic,
-            'subject_id': 'Luis-Chavez',
+            'subject_id': 'Robert-Cuadra',
             'gallery_name': 'TheGallery',
         };
 
@@ -187,16 +188,20 @@
 
             info = JSON.parse(this.responseText);
             if("Errors" in info || info.images[0].transaction.status == "failure") {
-                var nameOfGuest = info.images[0].transaction.subject_id;
+
                 var element = document.getElementById("GuestName");
-                element.innerHTML = "";
+                element.innerHTML = "Sorry! Are you on the RSVP List?";
+
+                document.getElementById("CheckMark").src = "./src/CheckInEmpty.png";
                 console.log("NO MATCH");
             }
             else {
                 var nameOfGuest = info.images[0].transaction.subject_id;
                 var element = document.getElementById("GuestName");
                 element.innerHTML = "Welcome " + nameOfGuest + "!";
-                console.log(nameOfGuest);
+
+                document.getElementById("CheckMark").src = "./src/CheckIn.png";
+
                 console.log("MATCH");
             }
           }
