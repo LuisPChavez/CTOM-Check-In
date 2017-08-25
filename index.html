@@ -8,6 +8,12 @@
         background-position: left bottom, center;
     }
 
+    h1 {
+        font-family: 'Candal';
+        font-size: 35px;
+        color: white;
+    }
+
     .container {
         display: flex;
         justify-content: center;
@@ -15,32 +21,40 @@
     }
 
     .containerForCameraAndText {
-        justify-content: center;
-        flex-direction: row;
         justify-content: space-around;
         flex-wrap: wrap;
         display: flex;      
     }
+
+    .checkMark {
+        padding-left: 70px;
+    }
+
 
 
 </style>
 
 <html>
   <head>
+    <link href='https://fonts.googleapis.com/css?family=Candal' rel='stylesheet'>
     <meta charset="UTF-8">
     <title>CTO Mixers Check In!</title>
   </head>
   <body>
-    <div class="container"x>
+    <div class="container">
         <img src="./src/ctoMixers.jpg" alt="CTO Mixers Pic" style="height: 300px; width: 600px">
     </div>
     <div class="containerForCameraAndText">
 
         <video id="video" width="640" height="480" autoplay></video>
+        
         <div>
-            <img id="CheckMark" src="./src/CheckInEmpty.png" style="height: 400px; width: 400px">
-            <h1 id="GuestName" >Don't see anyone yet!</h1>
+            <div class="checkMark">
+                <img id="CheckMark" src="./src/CheckInEmpty.png" style="height: 450px; width: 450px" style="padding-left: 60px">
+            </div>
+            <h1 id="GuestName">Don't see anyone yet!</h1>
         </div>
+        <img src="./src/CheckInEmpty.png" style="height:400px; width: 900px" style="padding-left: 60px;">
         <canvas id="canvas" width="640" height="480"></canvas>
 
     </div>
@@ -49,12 +63,17 @@
 
 <script>
     var guestData;
-    const storage = require('electron-storage');
-    storage.get('guestList.json', function(error, data) {
-        if (error) throw error;
-        guestData = data;
-        //enrollList();
-    });
+
+    readJsonData();
+
+    function readJsonData() {
+        const storage = require('electron-storage');
+        storage.get('guestList.json', function(error, data) {
+            if (error) throw error;
+            guestData = data;
+            //enrollList();
+        });
+    }
 
 
 
@@ -126,6 +145,7 @@
     }
 
     viewList();
+    
 
     function enrollList() {
         console.log(guestData);
@@ -204,9 +224,33 @@
             else {
                 var nameOfGuest = info.images[0].transaction.subject_id;
                 var element = document.getElementById("GuestName");
-                element.innerHTML = "Welcome " + nameOfGuest + "!";
 
                 document.getElementById("CheckMark").src = "./src/CheckIn.png";
+                
+                for( var i = 0; i < guestData.length; i++) {
+                    var guestId = guestData[i].lastName + "-" + guestData[i].firstName;
+                    var guestNameForPrint = guestData[i].firstName + " " + guestData[i].lastName;
+                    if( guestId == nameOfGuest)
+                    {
+                        if(guestData[i].checkedIn == true) {
+                            element.innerHTML = "You already checked in " + guestNameForPrint + "!";
+                        }
+                        else {
+                            element.innerHTML = "You're checked in " + guestNameForPrint + "!";
+                            guestData[i].checkedIn = true;
+                            //readJsonData();
+                        }
+                    }
+                }
+
+                const storage = require('electron-storage');
+                storage.set('guestList.json', guestData) 
+                .then(() => {
+                    console.log('The file was successfully written to the storage');
+                })
+                .catch(err => {
+                    console.error(err);
+                });
 
                 console.log("MATCH");
             }
