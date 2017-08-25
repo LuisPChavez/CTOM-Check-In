@@ -48,6 +48,17 @@
 </html>
 
 <script>
+    var guestData;
+
+    const storage = require('electron-storage');
+    storage.get('guestList.json', function(error, data) {
+        if (error) throw error;
+        guestData = data;
+        console.log(data);
+    });
+
+
+
     // Grab elements, create settings, etc.
      var video = document.getElementById('video'); 
 
@@ -61,38 +72,36 @@
         });
     }
 
-    
-    var canvas = document.getElementById('canvas');
-    var context = canvas.getContext('2d');
-    var video = document.getElementById('video');
-/*
-    var request = new XMLHttpRequest();
-        request.open('POST', 'https://api.kairos.com/gallery/remove_subject');
+    function removeList() {
+        var canvas = document.getElementById('canvas');
+        var context = canvas.getContext('2d');
+        var video = document.getElementById('video');
 
-        request.setRequestHeader('Content-Type', 'application/json');
-        request.setRequestHeader('app_id', '87fbd2da');
-        request.setRequestHeader('app_key', '88d1dfeed8460e409e85e9d429873b22');
+        var request = new XMLHttpRequest();
+            request.open('POST', 'https://api.kairos.com/gallery/remove');
+            request.setRequestHeader('Content-Type', 'application/json');
+            request.setRequestHeader('app_id', '87fbd2da');
+            request.setRequestHeader('app_key', '88d1dfeed8460e409e85e9d429873b22');
 
-        request.onreadystatechange = function () {
-            if (this.readyState === 4) {
-                console.log('Status:', this.status);
-                console.log('Headers:', this.getAllResponseHeaders());
-                console.log('Body:', this.responseText);
-            }
+            request.onreadystatechange = function () {
+                if (this.readyState === 4) {
+                    console.log('Status:', this.status);
+                    console.log('Headers:', this.getAllResponseHeaders());
+                    console.log('Body:', this.responseText);
+                }
+            };
+
+
+        var body = {
+            'gallery_name': 'TheGallery',
         };
+    
+        request.send(JSON.stringify(body));
+    }
 
-
-    var body = {
-        'gallery_name': 'TheGallery',
-        'subject_id': 'Luis-Chavez'
-    };
-
-    request.send(JSON.stringify(body));
-
-*/
+    //removeList();
 
     var base64Pic;
-    //console.log(video);
     function viewList() {
         var request = new XMLHttpRequest();
         request.open('POST', 'https://api.kairos.com/gallery/view');
@@ -117,46 +126,44 @@
         request.send(JSON.stringify(body));
     }
 
-    viewList();
+    //viewList();
 
-    function enrollPeople() {
-        const nativeImage = require('electron').nativeImage
+    function enrollList() {
 
-        let image = nativeImage.createFromPath('./Guests/Robert-Cuadra.png');
-        //console.log(image);
-        var base64Pic = image.toDataURL();
+        for( var i = 0; i < guestData.length; i++) {
+            const nativeImage = require('electron').nativeImage;
+            let image = nativeImage.createFromPath('./Guests/Robert-Cuadra.png');
+            var base64Pic = image.toDataURL();
 
-        var request = new XMLHttpRequest();
+            var request = new XMLHttpRequest();
 
-        request.open('POST', 'https://api.kairos.com/enroll');
+            request.open('POST', 'https://api.kairos.com/enroll');
 
-        request.setRequestHeader('Content-Type', 'application/json');
-        request.setRequestHeader('app_id', '87fbd2da');
-        request.setRequestHeader('app_key', '88d1dfeed8460e409e85e9d429873b22');
+            request.setRequestHeader('Content-Type', 'application/json');
+            request.setRequestHeader('app_id', '87fbd2da');
+            request.setRequestHeader('app_key', '88d1dfeed8460e409e85e9d429873b22');
 
-        request.onreadystatechange = function () {
-            if (this.readyState === 4) {
-                console.log('Status:', this.status);
-                console.log('Headers:', this.getAllResponseHeaders());
-                console.log('Body:', this.responseText);
-            }
-        };
+            request.onreadystatechange = function () {
+                if (this.readyState === 4) {
+                    console.log('Status:', this.status);
+                    console.log('Headers:', this.getAllResponseHeaders());
+                    console.log('Body:', this.responseText);
+                }   
+            };
 
+            var body = {
+                'image': base64Pic,
+                'subject_id': 'Robert-Cuadra',
+                'gallery_name': 'TheGallery',
+            };
 
+            request.send(JSON.stringify(body));
+            
+        }
         
-
-        var body = {
-            'image': base64Pic,
-            'subject_id': 'Robert-Cuadra',
-            'gallery_name': 'TheGallery',
-        };
-
-
-
-        request.send(JSON.stringify(body));
     }
 
-    enrollPeople();
+    //enrollList();
 
     function takePicture() {
         canvas = document.getElementById('canvas');
@@ -168,9 +175,7 @@
         console.log(video.src);
         console.log("Picture taken");
         context.drawImage(video, 0, 0, 640, 480);
-        var base64Str3 = canvas.toDataURL();
-
-        
+        var base64Str = canvas.toDataURL();
 
         var request = new XMLHttpRequest();
         
@@ -208,23 +213,13 @@
         };
 
         var body = {
-          'image': base64Str3,
+          'image': base64Str,
           'gallery_name' : 'TheGallery'
         };
         
         request.send(JSON.stringify(body));
     }
     
-    setInterval(takePicture, 4000);
+    //setInterval(takePicture, 4000);
 
-    
-
-
-    
-    // Trigger photo take
-    /*
-    document.getElementById("snap").addEventListener("click", function() {
-        context.drawImage(video, 0, 0, 640, 480);
-    });
-    */
 </script>
