@@ -49,12 +49,11 @@
 
 <script>
     var guestData;
-
     const storage = require('electron-storage');
     storage.get('guestList.json', function(error, data) {
         if (error) throw error;
         guestData = data;
-        console.log(data);
+        //enrollList();
     });
 
 
@@ -93,7 +92,7 @@
 
 
         var body = {
-            'gallery_name': 'TheGallery',
+            'gallery_name': 'CTOMGallery',
         };
     
         request.send(JSON.stringify(body));
@@ -120,19 +119,23 @@
     
 
         var body = {
-            'gallery_name': 'TheGallery'
+            'gallery_name': 'CTOMGallery'
         };
 
         request.send(JSON.stringify(body));
     }
 
-    //viewList();
+    viewList();
 
     function enrollList() {
-
+        console.log(guestData);
         for( var i = 0; i < guestData.length; i++) {
+            var guestId = guestData[i].lastName + "-" +guestData[i].firstName;
+
             const nativeImage = require('electron').nativeImage;
-            let image = nativeImage.createFromPath('./Guests/Robert-Cuadra.png');
+            var imageURL = "./Guests/" + guestId + ".png";
+            console.log(imageURL);
+            let image = nativeImage.createFromPath(imageURL);
             var base64Pic = image.toDataURL();
 
             var request = new XMLHttpRequest();
@@ -153,8 +156,8 @@
 
             var body = {
                 'image': base64Pic,
-                'subject_id': 'Robert-Cuadra',
-                'gallery_name': 'TheGallery',
+                'subject_id': guestId,
+                'gallery_name': 'CTOMGallery',
             };
 
             request.send(JSON.stringify(body));
@@ -162,8 +165,6 @@
         }
         
     }
-
-    //enrollList();
 
     function takePicture() {
         canvas = document.getElementById('canvas');
@@ -214,12 +215,12 @@
 
         var body = {
           'image': base64Str,
-          'gallery_name' : 'TheGallery'
+          'gallery_name' : 'CTOMGallery'
         };
         
         request.send(JSON.stringify(body));
     }
     
-    //setInterval(takePicture, 4000);
+    setInterval(takePicture, 4000);
 
 </script>
