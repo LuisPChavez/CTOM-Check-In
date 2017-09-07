@@ -45,9 +45,7 @@
         <img src="./src/ctoMixers.jpg" alt="CTO Mixers Pic" style="height: 300px; width: 600px">
     </div>
     <div class="containerForCameraAndText">
-
         <video id="video" width="640" height="480" autoplay></video>
-        
         <div>
             <div class="checkMark">
                 <img id="CheckMark" src="./src/CheckInEmpty.png" style="height: 450px; width: 450px" style="padding-left: 60px">
@@ -56,7 +54,6 @@
         </div>
         <img src="./src/CheckInEmpty.png" style="height:400px; width: 900px" style="padding-left: 60px;">
         <canvas id="canvas" width="640" height="480"></canvas>
-
     </div>
   </body>
 </html>
@@ -66,12 +63,14 @@
 
     readJsonData();
 
+    //Function reads data from a Json file which has all the info about guests. Json file is then used to enroll the list
+    //which is what Kairos uses as a base to matches faces with.
     function readJsonData() {
         const storage = require('electron-storage');
         storage.get('guestList.json', function(error, data) {
             if (error) throw error;
             guestData = data;
-            //enrollList();
+            enrollList();
         });
     }
 
@@ -90,6 +89,7 @@
         });
     }
 
+    //Removes the attendee list so a new one could be added.
     function removeList() {
         var canvas = document.getElementById('canvas');
         var context = canvas.getContext('2d');
@@ -119,6 +119,8 @@
 
     //removeList();
 
+
+    //Function console.logs everyone on the list Karios is using to match faces with.
     var base64Pic;
     function viewList() {
         var request = new XMLHttpRequest();
@@ -146,7 +148,7 @@
 
     viewList();
     
-
+    //Function looks at json file and enrolls them in the list Kairos uses to matches faces with.
     function enrollList() {
         console.log(guestData);
         for( var i = 0; i < guestData.length; i++) {
@@ -186,6 +188,38 @@
         
     }
 
+    //Function is used to enroll a single person. Used for testing!
+    function enrollTest() {
+            var request = new XMLHttpRequest();
+
+            request.open('POST', 'https://api.kairos.com/enroll');
+
+            request.setRequestHeader('Content-Type', 'application/json');
+            request.setRequestHeader('app_id', '87fbd2da');
+            request.setRequestHeader('app_key', '88d1dfeed8460e409e85e9d429873b22');
+
+            request.onreadystatechange = function () {
+                if (this.readyState === 4) {
+                    console.log('Status:', this.status);
+                    console.log('Headers:', this.getAllResponseHeaders());
+                    console.log('Body:', this.responseText);
+                }   
+            };
+
+            var body = {
+                'image': 'https://cdn.evbuc.com/eventlogos/82410427/chavezluis.png',
+                'subject_id': 'Joe Devon',
+                'gallery_name': 'CTOMGallery',
+            };
+
+            request.send(JSON.stringify(body));
+    }
+    //enrollTest();
+
+    //Function takes a picture every 2.5 seconds(Kairos API limits us to 25 calls a minute) and then calls 
+    //Kairos to see if a person is in the picture and then tries to match that person's face with one
+    //in the list. If they are matched with someone the function then changes the json file so the person 
+    //is checked in. If they are already checked in a message will pop up for the guest.
     function takePicture() {
         canvas = document.getElementById('canvas');
         canvas.style.visibility = "hidden";
@@ -239,18 +273,18 @@
                             element.innerHTML = "You're checked in " + guestNameForPrint + "!";
                             guestData[i].checkedIn = true;
                             //readJsonData();
+                            const storage = require('electron-storage');
+                            storage.set('guestList.json', guestData) 
+                            .then(() => {
+                                console.log('The file was successfully written to the storage');
+                            })
+                            .catch(err => {
+                                console.error(err);
+                            });
+
                         }
                     }
                 }
-
-                const storage = require('electron-storage');
-                storage.set('guestList.json', guestData) 
-                .then(() => {
-                    console.log('The file was successfully written to the storage');
-                })
-                .catch(err => {
-                    console.error(err);
-                });
 
                 console.log("MATCH");
             }
@@ -265,6 +299,6 @@
         request.send(JSON.stringify(body));
     }
     
-    setInterval(takePicture, 4000);
+    setInterval(takePicture, 2500);
 
 </script>
