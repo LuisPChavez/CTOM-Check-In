@@ -31,7 +31,91 @@
     }
 
 
+    .form-style-5{
+        max-width: 500px;
+        padding: 10px 20px;
+        background: #f4f7f8;
+        margin: 10px auto;
+        padding: 20px;
+        background: #f4f7f8;
+        border-radius: 8px;
+        font-family: Georgia, "Times New Roman", Times, serif;
+    }
+    .form-style-5 fieldset{
+        border: none;
+    }
+    .form-style-5 legend {
+        font-size: 1.4em;
+        margin-bottom: 10px;
+        justify-content: center;
+    }
+    .form-style-5 label {
+        display: block;
+        margin-bottom: 8px;
+    }
+    .form-style-5 input[type="text"],
+    .form-style-5 input[type="email"],
+    .form-style-5 textarea,
+    .form-style-5 select {
+        font-family: Georgia, "Times New Roman", Times, serif;
+        background: rgba(255,255,255,.1);
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        margin: 0;
+        outline: 0;
+        padding: 7px;
+        width: 100%;
+        box-sizing: border-box; 
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box; 
+        background-color: #e8eeef;
+        color:#8a97a0;
+        -webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.03) inset;
+        box-shadow: 0 1px 0 rgba(0,0,0,0.03) inset;
+        margin-bottom: 30px;
+    
+    }
+    .form-style-5 input[type="text"]:focus,
+    .form-style-5 input[type="email"]:focus,
+    .form-style-5 textarea:focus,
+    .form-style-5 select:focus{
+        background: #d2d9dd;
+    }
+    .form-style-5 select{
+        -webkit-appearance: menulist-button;
+        height:35px;
+    }
 
+
+    .form-style-5 input[type="submit"],
+    .form-style-5 input[type="button"]
+    {
+        position: relative;
+        display: block;
+        padding: 19px 39px 18px 39px;
+        color: #FFF;
+        margin: 0 auto;
+        background: #1abc9c;
+        font-size: 18px;
+        text-align: center;
+        font-style: normal;
+        width: 100%;
+        border: 1px solid #16a085;
+        border-width: 1px 1px 3px;
+        margin-bottom: 10px;
+    }
+    .form-style-5 input[type="submit"]:hover,
+    .form-style-5 input[type="button"]:hover
+    {
+        background: #109177;
+    }
+
+    .form-style {
+        padding: 1;
+        background-color: #e6e6e6;
+        padding: 5px 70px 0px 70px;
+    }
 </style>
 
 <html>
@@ -46,11 +130,26 @@
     </div>
     <div class="containerForCameraAndText">
         <video id="video" width="640" height="480" autoplay></video>
-        <div>
-            <div class="checkMark">
-                <img id="CheckMark" src="./src/CheckInEmpty.png" style="height: 450px; width: 450px" style="padding-left: 60px">
+        <div class="form-style">
+            <!--
+            <div class="form-style-5">
+                <form>
+                    <fieldset>
+
+                        
+                        <legend>Guest Info</legend>
+                        <input type="text" name="field1" placeholder="First Name *">
+                        <input type="text" name="field2" placeholder="Last Name *"> 
+                        <input type="email" name="field3" placeholder="Email *">
+                        <input type="text" name="field4" placeholder="Company ">  
+                    </fieldset>
+                    <input type="submit" value="Apply" />
+                </form>
             </div>
-            <h1 id="GuestName">Don't see anyone yet!</h1>
+            -->
+            <iframe src="http://go.dws.la/l/345901/2018-01-25/59n577" width="100%" height="500" type="text/html" frameborder="0" allowTransparency="true" style="border: 0"></iframe>
+            <!--<h1 id="GuestName">Don't see anyone yet!</h1>-->
+            <button type="button" onclick="takePicture2()">Click Me!</button>
         </div>
         <img src="./src/CheckInEmpty.png" style="height:400px; width: 900px" style="padding-left: 60px;">
         <canvas id="canvas" width="640" height="480"></canvas>
@@ -59,9 +158,32 @@
 </html>
 
 <script>
+    
     var guestData;
 
-    readJsonData();
+    function takePicture2() {
+        canvas = document.getElementById('canvas');
+        canvas.style.visibility = "hidden";
+        context = canvas.getContext('2d');
+        video = document.getElementById('video');
+        var info;
+
+        //console.log(video.src);
+        console.log("Picture taken");
+        context.drawImage(video, 0, 0, 640, 480);
+        var base64Str = canvas.toDataURL("image/png");
+        
+        base64Str = base64Str.replace("data:image/png;base64,", "");
+        var filePath = "C:/Users/unsto/CTOM-Check-In/GuestPictures/";
+
+
+        var fs = require('fs');
+        fs.writeFile('C:/Users/unsto/CTOM-Check-In/GuestPictures/test2.png', base64Str , 'base64', function (err) {
+            if (err) throw err
+            console.log('Saved!');
+        });
+    }
+    //readJsonData();
 
     //Function reads data from a Json file which has all the info about guests. Json file is then used to enroll the list
     //which is what Kairos uses as a base to matches faces with.
@@ -103,15 +225,16 @@
 
             request.onreadystatechange = function () {
                 if (this.readyState === 4) {
-                    console.log('Status:', this.status);
-                    console.log('Headers:', this.getAllResponseHeaders());
-                    console.log('Body:', this.responseText);
+                    //console.log('Status:', this.status);
+                    //console.log('Headers:', this.getAllResponseHeaders());
+                    //console.log('Body:', this.responseText);
                 }
             };
 
 
         var body = {
             'gallery_name': 'CTOMGallery',
+            'subject_id': 'Joe Devon'
         };
     
         request.send(JSON.stringify(body));
@@ -132,9 +255,9 @@
 
         request.onreadystatechange = function () {
             if (this.readyState === 4) {
-                console.log('Status:', this.status);
-                console.log('Headers:', this.getAllResponseHeaders());
-                console.log('Body:', this.responseText);
+                //console.log('Status:', this.status);
+                //console.log('Headers:', this.getAllResponseHeaders());
+                //console.log('Body:', this.responseText);
             }
         };
     
@@ -146,11 +269,11 @@
         request.send(JSON.stringify(body));
     }
 
-    viewList();
+    //viewList();
     
     //Function looks at json file and enrolls them in the list Kairos uses to matches faces with.
     function enrollList() {
-        console.log(guestData);
+        //console.log(guestData);
         for( var i = 0; i < guestData.length; i++) {
             var guestId = guestData[i].lastName + "-" +guestData[i].firstName;
 
@@ -178,7 +301,7 @@
 
             var body = {
                 'image': base64Pic,
-                'subject_id': guestId,
+                'subject_id': guestId, 
                 'gallery_name': 'CTOMGallery',
             };
 
@@ -227,11 +350,11 @@
         video = document.getElementById('video');
         var info;
 
-        console.log(video.src);
+        //console.log(video.src);
         console.log("Picture taken");
         context.drawImage(video, 0, 0, 640, 480);
         var base64Str = canvas.toDataURL();
-
+        
         var request = new XMLHttpRequest();
         
         request.open('POST', 'https://api.kairos.com/recognize');
@@ -257,9 +380,9 @@
             }
             else {
                 var nameOfGuest = info.images[0].transaction.subject_id;
-                var element = document.getElementById("GuestName");
+                  var element = document.getElementById("GuestName");
 
-                document.getElementById("CheckMark").src = "./src/CheckIn.png";
+                    //document.getElementById("CheckMark").src = "./src/CheckIn.png";
                 
                 for( var i = 0; i < guestData.length; i++) {
                     var guestId = guestData[i].lastName + "-" + guestData[i].firstName;
