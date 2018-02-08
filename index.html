@@ -10,7 +10,8 @@
 
     h1 {
         font-family: 'Candal';
-        font-size: 35px;
+        font-weight: normal;
+        font-size: 50px;
         color: white;
     }
 
@@ -29,7 +30,6 @@
     .checkMark {
         padding-left: 70px;
     }
-
 
     .form-style-5{
         max-width: 500px;
@@ -116,6 +116,13 @@
         background-color: #e6e6e6;
         padding: 5px 70px 0px 70px;
     }
+
+    .guestRecognized {
+        position: relative;
+        left: 400px;
+        bottom: 25px;
+        justify-content: center;
+    }
 </style>
 
 <html>
@@ -130,76 +137,38 @@
     </div>
     <div class="containerForCameraAndText">
         <video id="video" width="640" height="480" autoplay></video>
-        <div class="form-style">
-            <!--
-            <div class="form-style-5">
+        <div id="guestNotRecognized">
+            <div class="form-style-5" id="form" alt="CTO Mixers Form">
                 <form>
                     <fieldset>
-
-                        
                         <legend>Guest Info</legend>
-                        <input type="text" name="field1" placeholder="First Name *">
-                        <input type="text" name="field2" placeholder="Last Name *"> 
-                        <input type="email" name="field3" placeholder="Email *">
-                        <input type="text" name="field4" placeholder="Company ">  
+                        <input id="firstNameField" type="text" name="field1" placeholder="First Name *">
+                        <input id="secondNameField" type="text" name="field2" placeholder="Last Name *"> 
+                        <input id="emailField" type="email" name="field3" placeholder="Email *">
+                        <input id="companyField" type="text" name="field4" placeholder="Company">  
                     </fieldset>
-                    <input type="submit" value="Apply" />
+                    <input type="submit" value="Apply" onclick="takePictureForNewGuest()" />
                 </form>
             </div>
-            -->
-            <iframe src="http://go.dws.la/l/345901/2018-01-25/59n577" width="100%" height="500" type="text/html" frameborder="0" allowTransparency="true" style="border: 0"></iframe>
-            <!--<h1 id="GuestName">Don't see anyone yet!</h1>-->
-            <button type="button" onclick="takePicture2()">Click Me!</button>
         </div>
-        <img src="./src/CheckInEmpty.png" style="height:400px; width: 900px" style="padding-left: 60px;">
-        <canvas id="canvas" width="640" height="480"></canvas>
+        <div id="guestRecognized" style="position: absolute">
+            <div class="guestRecognized">
+                <h1 style="padding-left: 30px" id="guestName">Hey (Guest Name) </h1>
+                <img src="./src/CheckIn.png" style="height:400px; width: 400px; padding-left:60px">
+            </div>
+        </div>
+        <canvas id="canvas" style="display: none" width="640" height="480"></canvas>
     </div>
   </body>
 </html>
 
 <script>
-    
     var guestData;
-
-    function takePicture2() {
-        canvas = document.getElementById('canvas');
-        canvas.style.visibility = "hidden";
-        context = canvas.getContext('2d');
-        video = document.getElementById('video');
-        var info;
-
-        //console.log(video.src);
-        console.log("Picture taken");
-        context.drawImage(video, 0, 0, 640, 480);
-        var base64Str = canvas.toDataURL("image/png");
-        
-        base64Str = base64Str.replace("data:image/png;base64,", "");
-        var filePath = "C:/Users/unsto/CTOM-Check-In/GuestPictures/";
-
-
-        var fs = require('fs');
-        fs.writeFile('C:/Users/unsto/CTOM-Check-In/GuestPictures/test2.png', base64Str , 'base64', function (err) {
-            if (err) throw err
-            console.log('Saved!');
-        });
-    }
-    //readJsonData();
-
-    //Function reads data from a Json file which has all the info about guests. Json file is then used to enroll the list
-    //which is what Kairos uses as a base to matches faces with.
-    function readJsonData() {
-        const storage = require('electron-storage');
-        storage.get('guestList.json', function(error, data) {
-            if (error) throw error;
-            guestData = data;
-            enrollList();
-        });
-    }
-
-
+    var guestRecognized = document.getElementById("guestRecognized");
+    guestRecognized.style.visibility = "hidden";
 
     // Grab elements, create settings, etc.
-     var video = document.getElementById('video'); 
+    var video = document.getElementById('video'); 
 
     // Get access to the camera!
 
@@ -210,8 +179,70 @@
             video.play();
         });
     }
+    
+    readJsonData();
+    //viewList();
 
-    //Removes the attendee list so a new one could be added.
+    //Copies whatever is in guestData to the guestSignedIn JSON file
+    function writeDataToJson() {
+        const storage2 = require('electron-storage');        
+        storage2.set('guestSignedIn.json', JSON.stringify(guestData), (err) => {
+            if (err) {
+                console.error(err)                }
+        });
+    }
+
+    //Function reads data from a Json file which has all the info about guests. Json file is then used to enroll the list
+    //which is what Kairos uses as a base to matches faces with.
+    function readJsonData() {
+        const storage = require('electron-storage');
+        storage.get('guestSignedIn.json', function(error, data) {
+            if (error) throw error;
+            guestData = data;
+            //enrollList();
+        });
+    }
+
+    //Removes the subject that matches the ID and it also removes him/her from the guest JSON file.
+    function removeOneSubject(subjectId) {
+        var request = new XMLHttpRequest();
+
+        request.open('POST', 'https://api.kairos.com/gallery/remove_subject');
+
+        request.setRequestHeader('Content-Type', 'application/json');
+        request.setRequestHeader('app_id', appId);
+        request.setRequestHeader('app_key', appKey);
+
+        request.onreadystatechange = function () {
+            if (this.readyState === 4) {
+                console.log('Status:', this.status);
+                console.log('Headers:', this.getAllResponseHeaders());
+                console.log('Body:', this.responseText);
+           }
+        };
+
+        var body = {
+            'gallery_name': 'CTOMGallery',
+            'subject_id': subjectId
+        };
+
+        request.send(JSON.stringify(body));
+        removeFromJSON(subjectId);
+    }
+
+    //Removes a subject that matches the parameter name from the JSON file
+    function removeFromJSON(subjectName) {
+        for( var i = 0; i < guestData.length; i++) {
+            var guestName = guestData[i].firstName + "-" + guestData[i].lastName;
+            if( guestName == subjectName ) {
+                guestData.splice(i, 1);
+            }
+        }
+
+        writeDataToJson();
+    }
+
+    //Removes the entire attendee list from the database on Kairos
     function removeList() {
         var canvas = document.getElementById('canvas');
         var context = canvas.getContext('2d');
@@ -220,14 +251,14 @@
         var request = new XMLHttpRequest();
             request.open('POST', 'https://api.kairos.com/gallery/remove');
             request.setRequestHeader('Content-Type', 'application/json');
-            request.setRequestHeader('app_id', '87fbd2da');
-            request.setRequestHeader('app_key', '88d1dfeed8460e409e85e9d429873b22');
+            request.setRequestHeader('app_id', appId);
+            request.setRequestHeader('app_key', appKey);
 
             request.onreadystatechange = function () {
                 if (this.readyState === 4) {
-                    //console.log('Status:', this.status);
-                    //console.log('Headers:', this.getAllResponseHeaders());
-                    //console.log('Body:', this.responseText);
+                    console.log('Status:', this.status);
+                    console.log('Headers:', this.getAllResponseHeaders());
+                    console.log('Body:', this.responseText);
                 }
             };
 
@@ -240,27 +271,25 @@
         request.send(JSON.stringify(body));
     }
 
-    //removeList();
-
-
-    //Function console.logs everyone on the list Karios is using to match faces with.
+    //Function logs the list from Kairos
     var base64Pic;
     function viewList() {
+
         var request = new XMLHttpRequest();
         request.open('POST', 'https://api.kairos.com/gallery/view');
 
         request.setRequestHeader('Content-Type', 'application/json');
-        request.setRequestHeader('app_id', '87fbd2da');
-        request.setRequestHeader('app_key', '88d1dfeed8460e409e85e9d429873b22');
+        request.setRequestHeader('app_id', appId);
+        request.setRequestHeader('app_key', appKey);
 
         request.onreadystatechange = function () {
             if (this.readyState === 4) {
-                //console.log('Status:', this.status);
-                //console.log('Headers:', this.getAllResponseHeaders());
-                //console.log('Body:', this.responseText);
+                console.log('Status:', this.status);
+                console.log('Headers:', this.getAllResponseHeaders());
+                console.log('Body:', this.responseText);
             }
         };
-    
+        
 
         var body = {
             'gallery_name': 'CTOMGallery'
@@ -268,17 +297,16 @@
 
         request.send(JSON.stringify(body));
     }
-
-    //viewList();
     
     //Function looks at json file and enrolls them in the list Kairos uses to matches faces with.
-    function enrollList() {
-        //console.log(guestData);
-        for( var i = 0; i < guestData.length; i++) {
-            var guestId = guestData[i].lastName + "-" +guestData[i].firstName;
 
+    function enrollList() {
+        var i = 0, stopLoopAt = guestData.length - 1;
+        //console.log(guestData);
+        function enrollGuest() {
+            var guestId = guestData[i].firstName + "-" + guestData[i].lastName;
             const nativeImage = require('electron').nativeImage;
-            var imageURL = "./Guests/" + guestId + ".png";
+            var imageURL = "./GuestPictures/" + guestId + ".png";
             console.log(imageURL);
             let image = nativeImage.createFromPath(imageURL);
             var base64Pic = image.toDataURL();
@@ -288,8 +316,8 @@
             request.open('POST', 'https://api.kairos.com/enroll');
 
             request.setRequestHeader('Content-Type', 'application/json');
-            request.setRequestHeader('app_id', '87fbd2da');
-            request.setRequestHeader('app_key', '88d1dfeed8460e409e85e9d429873b22');
+            request.setRequestHeader('app_id', appId);
+            request.setRequestHeader('app_key', appKey);
 
             request.onreadystatechange = function () {
                 if (this.readyState === 4) {
@@ -306,44 +334,107 @@
             };
 
             request.send(JSON.stringify(body));
-            
+            i++;
+            if( i < stopLoopAt ){
+                setTimeout( enrollGuest, 5000 );
+            }
         }
+
+        enrollGuest();
+
+    }
+
+    //Function is used to enroll one person
+    function enrollOneGuest(image, subject_id) {
+        var request = new XMLHttpRequest();
+
+        request.open('POST', 'https://api.kairos.com/enroll');
+
+        request.setRequestHeader('Content-Type', 'application/json');
+        request.setRequestHeader('app_id', appId);
+        request.setRequestHeader('app_key', appKey);
+
+        request.onreadystatechange = function () {
+            if (this.readyState === 4) {
+                console.log('Status:', this.status);
+                console.log('Headers:', this.getAllResponseHeaders());
+                console.log('Body:', this.responseText);
+            }   
+        };
+
+        var body = {
+            'image': image,
+            'subject_id': subject_id,
+            'gallery_name': 'CTOMGallery',
+        };
+
+        request.send(JSON.stringify(body));
+    }
+    
+    //Function adds a new guest to the JSON file, Karios database, and puts picture in the guest folder
+    function takePictureForNewGuest() {
+        canvas = document.getElementById('canvas');
+        canvas.style.visibility = "hidden";
+        context = canvas.getContext('2d');
+        video = document.getElementById('video');
+        var info;
+
+        //console.log(video.src);
+        console.log("Picture taken");
+        context.drawImage(video, 0, 0, 640, 480);
+        var base64StrForEnroll = canvas.toDataURL();
+        var base64Str = canvas.toDataURL("image/png");
+
+        var guestFirstName = document.getElementById("firstNameField").value;
+        var guestSecondName = document.getElementById("secondNameField").value;
         
+        base64Str = base64Str.replace("data:image/png;base64,", "");
+        var filePath = "C:/Users/unsto/CTOM-Check-In/GuestPictures/" + guestFirstName + "-" + guestSecondName + ".png";
+        console.log(filePath);
+
+
+        var fs = require('fs');
+        fs.writeFile(filePath, base64Str , 'base64', function (err) {
+            if (err) throw err
+            console.log('Saved!');
+        });
+
+        //event.preventDefault();
+        const storage = require('electron-storage');
+        var guestData = "";
+
+        storage.get('guestSignedIn.json', function(error, data) {
+            if (error) throw error;
+            guestData = data;
+
+            var guestFirstName = document.getElementById("firstNameField").value;
+            var guestSecondName = document.getElementById("secondNameField").value;
+            var guestEmail = document.getElementById("emailField").value;
+            var guestCompany = document.getElementById("companyField").value;
+            var guestId = guestFirstName + "-" + guestSecondName;
+            
+        
+            var guestInputData = {firstName: guestFirstName, lastName: guestSecondName, email: guestEmail, work: guestCompany, checkIn: true};
+            guestData.push(guestInputData);
+
+            storage.set('guestSignedIn.json', JSON.stringify(guestData), (err) => {
+                if (err) {
+                    console.error(err)
+                }
+            });
+
+            enrollOneGuest(base64StrForEnroll, guestId);
+        });        
     }
-
-    //Function is used to enroll a single person. Used for testing!
-    function enrollTest() {
-            var request = new XMLHttpRequest();
-
-            request.open('POST', 'https://api.kairos.com/enroll');
-
-            request.setRequestHeader('Content-Type', 'application/json');
-            request.setRequestHeader('app_id', '87fbd2da');
-            request.setRequestHeader('app_key', '88d1dfeed8460e409e85e9d429873b22');
-
-            request.onreadystatechange = function () {
-                if (this.readyState === 4) {
-                    console.log('Status:', this.status);
-                    console.log('Headers:', this.getAllResponseHeaders());
-                    console.log('Body:', this.responseText);
-                }   
-            };
-
-            var body = {
-                'image': 'https://cdn.evbuc.com/eventlogos/82410427/chavezluis.png',
-                'subject_id': 'Joe Devon',
-                'gallery_name': 'CTOMGallery',
-            };
-
-            request.send(JSON.stringify(body));
-    }
-    //enrollTest();
 
     //Function takes a picture every 2.5 seconds(Kairos API limits us to 25 calls a minute) and then calls 
     //Kairos to see if a person is in the picture and then tries to match that person's face with one
     //in the list. If they are matched with someone the function then changes the json file so the person 
     //is checked in. If they are already checked in a message will pop up for the guest.
     function takePicture() {
+        var guestRecognized = document.getElementById("guestRecognized");
+        var guestNotRecognized = document.getElementById("guestNotRecognized");
+        var guestName = document.getElementById('guestName');
         canvas = document.getElementById('canvas');
         canvas.style.visibility = "hidden";
         context = canvas.getContext('2d');
@@ -360,8 +451,8 @@
         request.open('POST', 'https://api.kairos.com/recognize');
         
         request.setRequestHeader('Content-Type', 'application/json');
-        request.setRequestHeader('app_id', '87fbd2da');
-        request.setRequestHeader('app_key', '88d1dfeed8460e409e85e9d429873b22');
+        request.setRequestHeader('app_id', appId);
+        request.setRequestHeader('app_key', appKey);
         
         request.onreadystatechange = function () {
           if (this.readyState === 4) {
@@ -371,44 +462,32 @@
 
             info = JSON.parse(this.responseText);
             if("Errors" in info || info.images[0].transaction.status == "failure") {
-
-                var element = document.getElementById("GuestName");
-                element.innerHTML = "Sorry! Are you on the RSVP List?";
-
-                document.getElementById("CheckMark").src = "./src/CheckInEmpty.png";
-                console.log("NO MATCH");
+                guestNotRecognized.style.visibility = "visible";
+                guestRecognized.style.visibility = "hidden";
             }
             else {
+                var guestDataAsAObject = JSON.parse(this.responseText);
+                const guestId = guestDataAsAObject.images[0].candidates[0].subject_id;
+                console.log(guestId);
+
+                guestNotRecognized.style.visibility = "hidden";
+                guestRecognized.style.visibility = "visible";
                 var nameOfGuest = info.images[0].transaction.subject_id;
-                  var element = document.getElementById("GuestName");
+                console.log(nameOfGuest);
+                var element = document.getElementById("GuestName");
 
-                    //document.getElementById("CheckMark").src = "./src/CheckIn.png";
-                
+                //document.getElementById("CheckMark").src = "./src/CheckIn.png";
                 for( var i = 0; i < guestData.length; i++) {
-                    var guestId = guestData[i].lastName + "-" + guestData[i].firstName;
-                    var guestNameForPrint = guestData[i].firstName + " " + guestData[i].lastName;
-                    if( guestId == nameOfGuest)
-                    {
-                        if(guestData[i].checkedIn == true) {
-                            element.innerHTML = "You already checked in " + guestNameForPrint + "!";
-                        }
-                        else {
-                            element.innerHTML = "You're checked in " + guestNameForPrint + "!";
-                            guestData[i].checkedIn = true;
-                            //readJsonData();
-                            const storage = require('electron-storage');
-                            storage.set('guestList.json', guestData) 
-                            .then(() => {
-                                console.log('The file was successfully written to the storage');
-                            })
-                            .catch(err => {
-                                console.error(err);
-                            });
+                    var guestNameForPrint = guestData[i].firstName + "-" + guestData[i].lastName;
 
-                        }
+                    if (guestNameForPrint == guestId) {
+                        guestNameForPrint = guestData[i].firstName + " " + guestData[i].lastName;
+                        document.getElementById('guestName').innerHTML = "Hey " + guestNameForPrint;
+                        guestData[i].checkIn = true;
+                        console.log(guestData[i]);
+                        writeDataToJson();
                     }
                 }
-
                 console.log("MATCH");
             }
           }
@@ -422,6 +501,6 @@
         request.send(JSON.stringify(body));
     }
     
-    setInterval(takePicture, 2500);
+    setInterval(takePicture, 2600);
 
 </script>
